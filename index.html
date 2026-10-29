@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TurnBook — Turnover Cleaner Job, Checklist &amp; Payout Book</title>
+<style>
+:root{--bg:#f3f6fb;--panel:#ffffff;--panel2:#e9eff8;--ink:#1b2a3d;--muted:#5d7085;--acc:#1668b4;--acc2:#2f8fd6;--warn:#b97a0c;--bad:#c23333;--good:#177245;--line:#ccd9e6;--radius:12px}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45}
+header{background:linear-gradient(135deg,#0d4d80,#1668b4);color:#fff;padding:16px}
+header h1{margin:0;font-size:22px}
+header .sub{color:#d3e6f7;font-size:13px;margin-top:2px}
+header .co{font-size:13px;color:#bfe3ff;margin-top:4px;font-weight:600}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--panel);position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;min-height:40px;white-space:nowrap}
+nav button.active{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+main{max-width:980px;margin:0 auto;padding:14px 12px 60px}
+section.view{display:none}
+section.view.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:17px}
+.card h3{margin:14px 0 8px;font-size:15px;color:var(--acc)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:8px 0 3px}
+input,select,textarea{width:100%;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px;font-size:15px;min-height:42px}
+textarea{min-height:56px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc2);outline-offset:0}
+input[type=checkbox]{width:auto;min-height:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.grid,.grid3{grid-template-columns:1fr}}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:11px 16px;font-size:15px;font-weight:700;cursor:pointer;min-height:44px}
+.btn.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad);font-weight:600}
+.btn.small{padding:7px 10px;font-size:13px;min-height:36px;min-height:40px;}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto}
+.big{font-size:24px;font-weight:800}
+.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi .k{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.kpi .k .v{font-size:20px;font-weight:800}
+.kpi .k .l{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
+.pill.done{background:#dcfce7;color:#166534}.pill.sched{background:#dbeafe;color:#1e40af}.pill.paid{background:#14532d;color:#bbf7d0}.pill.unpaid{background:#fee2e2;color:#991b1b}.pill.low{background:#fef3c7;color:#92400e}
+.muted{color:var(--muted);font-size:13px}
+.err{color:var(--bad);font-size:13.5px;font-weight:600;margin-top:8px;min-height:18px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.chk input{margin-top:3px;width:20px;height:20px}
+.chk .done-t{text-decoration:line-through;color:var(--muted)}
+.progress{height:10px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:8px 0}
+.progress>i{display:block;height:100%;background:var(--acc2)}
+.hidden{display:none}
+details.help summary{cursor:pointer;font-weight:700;color:var(--acc)}
+#stmtPrint{display:none}
+@media print{
+  header,nav,.btn,.btnrow,.no-print{display:none!important}
+  body{background:#fff}
+  main{max-width:none;padding:0}
+  section.view{display:none!important}
+  section.view.printing{display:block!important}
+  .card{border:none;padding:0}
+  body.stmt-printing header,body.stmt-printing nav,body.stmt-printing main{display:none!important}
+  body.stmt-printing #stmtPrint{display:block!important;font-size:13.5px}
+  body.stmt-printing #stmtPrint table{width:100%;border-collapse:collapse}
+  body.stmt-printing #stmtPrint th,body.stmt-printing #stmtPrint td{border-bottom:1px solid #bbb;padding:6px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧹 TurnBook</h1>
+  <div class="sub">Turnover Cleaner Job, Checklist &amp; Payout Reconciliation Book</div>
+  <div class="co" id="hdrBiz"></div>
+</header>
+<nav id="topnav">
+  <button data-view="dash" class="active">Dashboard</button>
+  <button data-view="jobs">Jobs</button>
+  <button data-view="props">Hosts &amp; Properties</button>
+  <button data-view="turn">Turnover Checklists</button>
+  <button data-view="payouts">Payouts</button>
+  <button data-view="restock">Restock</button>
+  <button data-view="miles">Mileage</button>
+  <button data-view="settings">Settings &amp; Help</button>
+</nav>
+<main>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="view active" id="view-dash">
+  <div class="card">
+    <h2>This month at a glance</h2>
+    <div class="kpi" id="dashKpis"></div>
+    <p class="muted" id="dashNote"></p>
+  </div>
+  <div class="card">
+    <h2>Who owes you</h2>
+    <div id="dashOwed"></div>
+  </div>
+  <div class="card">
+    <h2>Coming up</h2>
+    <div id="dashUpcoming"></div>
+  </div>
+  <div class="card" id="demoCard">
+    <h2>Sample data</h2>
+    <p class="muted">A sample cleaning business (3 hosts, 4 properties, 6 cleans) is loaded so you can watch the reconciliation math work. When you're ready to start fresh:</p>
+    <div class="btnrow"><button class="btn secondary" id="btnRemoveSamples">Remove sample data</button></div>
+  </div>
+</section>
+
+<!-- ============ JOBS ============ -->
+<section class="view" id="view-jobs">
+  <div class="card">
+    <h2 id="jobFormTitle">Log a clean</h2>
+    <div class="grid">
+      <div><label>Date</label><input type="date" id="jDate"></div>
+      <div><label>Property</label><select id="jProperty"></select></div>
+    </div>
+    <div class="grid3">
+      <div><label>Quoted price ($)</label><input inputmode="decimal" type="number" id="jQuoted" min="0" step="0.01" placeholder="120.00"></div>
+      <div><label>How the host pays</label><select id="jMethod"><option value="marketplace">Marketplace (Airbnb/Vrbo/Turno)</option><option value="direct">Direct (host pays me)</option></select></div>
+      <div><label>Marketplace fee %</label><input inputmode="decimal" type="number" id="jFeePct" min="0" max="100" step="0.1"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Status</label><select id="jStatus"><option value="done">Done</option><option value="scheduled">Scheduled</option></select></div>
+      <div><label>Paid?</label><select id="jPaid"><option value="no">Not yet</option><option value="yes">Yes — paid</option></select></div>
+      <div><label>Amount actually received ($)</label><input inputmode="decimal" type="number" id="jReceived" min="0" step="0.01" placeholder="auto = quoted − fee"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Supplies used ($)</label><input inputmode="decimal" type="number" id="jSupplies" min="0" step="0.01" placeholder="0.00"></div>
+      <div><label>Miles driven</label><input inputmode="decimal" type="number" id="jMiles" min="0" step="0.1" placeholder="0"></div>
+      <div><label>Minutes on site</label><input inputmode="decimal" type="number" id="jMinutes" min="0" step="1" placeholder="0"></div>
+    </div>
+    <label>Notes (guest count, extra mess, damage found…)</label>
+    <textarea id="jNotes"></textarea>
+    <div class="err" id="jErr"></div>
+    <div class="btnrow">
+      <button class="btn" id="btnSaveJob">Save clean</button>
+      <button class="btn secondary hidden" id="btnCancelJobEdit">Cancel edit</button>
+    </div>
+    <p class="muted">Received is pre-filled as quoted − fee when you mark a marketplace job paid and leave it blank — then edit it if the platform paid something different. That difference is exactly what the Payouts tab reconciles.</p>
+  </div>
+  <div class="card">
+    <h2>Job ledger</h2>
+    <div class="grid">
+      <div><label>Filter by host</label><select id="jobFilterHost"><option value="">All hosts</option></select></div>
+      <div><label>Filter by status</label><select id="jobFilterStatus"><option value="">All</option><option value="done">Done</option><option value="scheduled">Scheduled</option><option value="unpaid">Done &amp; unpaid</option></select></div>
+    </div>
+    <div class="tblwrap"><table>
+      <thead><tr><th>Date</th><th>Property / Host</th><th class="num">Quoted</th><th class="num">Fee</th><th class="num">Received</th><th>Status</th><th></th></tr></thead>
+      <tbody id="jobRows"></tbody>
+    </table></div>
+    <p class="muted" id="jobTotals"></p>
+  </div>
+</section>
+
+<!-- ============ HOSTS & PROPERTIES ============ -->
+<section class="view" id="view-props">
+  <div class="card">
+    <h2 id="hostFormTitle">Add a host</h2>
+    <div class="grid">
+      <div><label>Host name *</label><input type="text" id="hName" placeholder="Sarah Mitchell"></div>
+      <div><label>Platform</label><select id="hPlatform"><option>Airbnb</option><option>Vrbo</option><option>Turno</option><option>Direct</option><option>Other</option></select></div>
+    </div>
+    <div class="grid">
+      <div><label>Contact (phone / email)</label><input type="text" id="hContact"></div>
+      <div><label>Notes</label><input type="text" id="hNotes" placeholder="Pays on Fridays, keypad code in app…"></div>
+    </div>
+    <div class="err" id="hErr"></div>
+    <div class="btnrow"><button class="btn" id="btnSaveHost">Save host</button><button class="btn secondary hidden" id="btnCancelHostEdit">Cancel edit</button></div>
+  </div>
+  <div class="card"><h2>Your hosts</h2><div id="hostList"></div></div>
+  <div class="card">
+    <h2 id="propFormTitle">Add a property</h2>
+    <div class="grid">
+      <div><label>Property name *</label><input type="text" id="pName" placeholder="Lakeview Cottage"></div>
+      <div><label>Host</label><select id="pHost"></select></div>
+    </div>
+    <div class="grid3">
+      <div><label>Address</label><input type="text" id="pAddress"></div>
+      <div><label>Beds</label><input inputmode="decimal" type="number" id="pBeds" min="0" step="1"></div>
+      <div><label>Baths</label><input inputmode="decimal" type="number" id="pBaths" min="0" step="0.5"></div>
+    </div>
+    <div class="grid">
+      <div><label>Standard clean fee ($)</label><input inputmode="decimal" type="number" id="pFee" min="0" step="0.01" placeholder="120.00"></div>
+      <div><label>Access / parking notes</label><input type="text" id="pAccess" placeholder="Lockbox 4417, park in rear…"></div>
+    </div>
+    <label>Turnover checklist (one item per line)</label>
+    <textarea id="pChecklist" rows="8"></textarea>
+    <div class="err" id="pErr"></div>
+    <div class="btnrow"><button class="btn" id="btnSaveProp">Save property</button><button class="btn secondary hidden" id="btnCancelPropEdit">Cancel edit</button></div>
+    <p class="muted">The checklist is copied onto each new clean for that property, so every turnover gets ticked off the same way — and the completed lists become your clean log.</p>
+  </div>
+  <div class="card"><h2>Your properties</h2><div id="propList"></div></div>
+</section>
+
+<!-- ============ TURNOVER CHECKLISTS ============ -->
+<section class="view" id="view-turn">
+  <div class="card">
+    <h2>Run a turnover checklist</h2>
+    <label>Pick a clean (done or scheduled)</label>
+    <select id="turnJob"></select>
+    <div id="turnBody"></div>
+  </div>
+  <div class="card">
+    <h2>Clean log</h2>
+    <p class="muted">Every completed clean with its checklist record — your proof of work if a host ever questions a turnover.</p>
+    <div id="cleanLog"></div>
+  </div>
+</section>
+
+<!-- ============ PAYOUTS ============ -->
+<section class="view" id="view-payouts">
+  <div class="card">
+    <h2>Payout reconciliation — per host</h2>
+    <p class="muted">For every finished clean: what you quoted, what the platform's fee should have taken, what should have landed — and what actually did. A negative variance means the platform paid less than its own fee explains. That gap is your money.</p>
+    <div class="tblwrap"><table>
+      <thead><tr><th>Host</th><th class="num">Cleans</th><th class="num">Quoted</th><th class="num">Platform fees</th><th class="num">Should have paid</th><th class="num">Actually paid</th><th class="num">Variance</th><th class="num">Still owed (unpaid)</th></tr></thead>
+      <tbody id="payRows"></tbody>
+      <tfoot id="payFoot"></tfoot>
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>Per-host payout statement</h2>
+    <div class="grid">
+      <div><label>Host</label><select id="stmtHost"></select></div>
+      <div><label>Month</label><input type="month" id="stmtMonth"></div>
+    </div>
+    <div class="btnrow no-print"><button class="btn" id="btnPrintStmt">Print statement</button></div>
+    <div id="stmtBody" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- ============ RESTOCK ============ -->
+<section class="view" id="view-restock">
+  <div class="card">
+    <h2>Add a supply item</h2>
+    <div class="grid">
+      <div><label>Property</label><select id="rProperty"></select></div>
+      <div><label>Item *</label><input type="text" id="rItem" placeholder="Toilet paper (rolls)"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Par (keep at least)</label><input inputmode="decimal" type="number" id="rPar" min="0" step="1" placeholder="12"></div>
+      <div><label>On hand now</label><input inputmode="decimal" type="number" id="rOnHand" min="0" step="1" placeholder="5"></div>
+      <div><label>Unit cost ($)</label><input inputmode="decimal" type="number" id="rCost" min="0" step="0.01" placeholder="0.60"></div>
+    </div>
+    <div class="err" id="rErr"></div>
+    <div class="btnrow"><button class="btn" id="btnSaveRestock">Save item</button></div>
+  </div>
+  <div class="card">
+    <h2>Restock list — what to bring next trip</h2>
+    <div id="restockList"></div>
+    <p class="muted" id="restockTotal"></p>
+    <div class="btnrow no-print"><button class="btn secondary" id="btnPrintRestock">Print shopping list</button></div>
+  </div>
+</section>
+
+<!-- ============ MILEAGE ============ -->
+<section class="view" id="view-miles">
+  <div class="card">
+    <h2>Log a trip</h2>
+    <div class="grid">
+      <div><label>Date</label><input type="date" id="mDate"></div>
+      <div><label>Miles</label><input inputmode="decimal" type="number" id="mMiles" min="0" step="0.1"></div>
+    </div>
+    <div class="grid">
+      <div><label>From</label><input type="text" id="mFrom" placeholder="Home"></div>
+      <div><label>To</label><input type="text" id="mTo" placeholder="Lakeview Cottage"></div>
+    </div>
+    <div class="err" id="mErr"></div>
+    <div class="btnrow"><button class="btn" id="btnSaveTrip">Save trip</button></div>
+    <p class="muted">Trips logged on a clean are added here automatically — add anything else (supply runs, key pickups) by hand.</p>
+  </div>
+  <div class="card">
+    <h2>Mileage log</h2>
+    <div class="tblwrap"><table>
+      <thead><tr><th>Date</th><th>From → To</th><th class="num">Miles</th><th class="num">Value</th><th></th></tr></thead>
+      <tbody id="mileRows"></tbody>
+    </table></div>
+    <p class="muted" id="mileTotals"></p>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="view" id="view-settings">
+  <div class="card">
+    <h2>Settings</h2>
+    <label>Your business name (prints on statements)</label>
+    <input type="text" id="sBiz">
+    <div class="grid">
+      <div><label>Default marketplace fee %</label><input inputmode="decimal" type="number" id="sFeePct" min="0" max="100" step="0.1"></div>
+      <div><label>Mileage value ($ per mile)</label><input inputmode="decimal" type="number" id="sMileRate" min="0" step="0.01"></div>
+    </div>
+    <div class="btnrow"><button class="btn" id="btnSaveSettings">Save settings</button></div>
+    <p class="muted">The fee default pre-fills new cleans; every clean keeps its own fee %, so a host switching platforms never rewrites history. Mileage value defaults to $0.70/mi — set it to the current IRS standard mileage rate or your own cost figure.</p>
+  </div>
+  <div class="card">
+    <h2>Backup &amp; data</h2>
+    <div class="btnrow">
+      <button class="btn secondary" id="btnExport">Export backup (JSON)</button>
+      <button class="btn secondary" id="btnImportBtn">Import backup</button>
+      <input type="file" id="fileImport" accept=".json,application/json" class="hidden">
+      <button class="btn danger" id="btnErase">Erase everything</button>
+    </div>
+    <p class="muted" id="backupNote">Your data lives only in this browser on this device. Export a backup before switching phones or browsers.</p>
+  </div>
+  <div class="card">
+    <details class="help">
+      <summary>Help — how TurnBook thinks about payouts</summary>
+      <p><b>Quoted</b> is the clean fee you agreed with the host. <b>Fee</b> is what the marketplace keeps (Turno + payment processing commonly run 10–13% combined on cleaner payouts). <b>Should have paid</b> = quoted − fee. When a payout lands, type what actually arrived into the clean. If it's less than it should be, the Payouts tab shows the <b>variance</b> — screenshot it and ask the platform where the rest went.</p>
+      <p><b>Unpaid cleans</b> are tracked separately from variances: a host who hasn't paid at all is a conversation; a platform that paid short is a ticket. TurnBook keeps them apart so you always know which one you're chasing.</p>
+      <p><b>Per-clean profit:</b> received − supplies − (miles × your mileage rate). The Jobs tab totals it so you can see which properties actually make money after the drive.</p>
+    </details>
+  </div>
+</section>
+
+</main>
+<div id="stmtPrint"></div>
+<script>
+"use strict";
+var LS_KEY = "turnbook_v1";
+var DEFAULT_CHECKLIST = ["Strip beds and start laundry","Wash dishes and run/empty dishwasher","Wipe kitchen counters, stove and fridge handles","Clean and sanitize both bathrooms","Restock toilet paper, paper towels and soaps","Vacuum all floors, mop hard floors","Empty every trash can and replace liners","Set thermostat, close windows, lock up and set alarm"];
+
+function uid(){ return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function num(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; }
+function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
+function fmt(n){ return "$" + round2(n).toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function todayStr(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function monthStr(){ return todayStr().slice(0,7); }
+function fmtDate(iso){ if(!iso) return ""; var p = iso.split("-"); if(p.length < 3) return iso; var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return m[parseInt(p[1],10)-1] + " " + parseInt(p[2],10) + ", " + p[0]; }
+
+var state = null;
+
+function defaultState(){
+  return { settings:{ bizName:"", defaultFeePct:12, mileRate:0.70 },
+           hosts:[], properties:[], jobs:[], restock:[], mileage:[], seeded:false };
+}
+
+function seed(){
+  var s = defaultState();
+  s.settings.bizName = "Sparkle Turn Co.";
+  var h1 = uid(), h2 = uid(), h3 = uid();
+  s.hosts = [
+    {id:h1, name:"Sarah Mitchell", platform:"Airbnb", contact:"sarah.m@example.com", notes:"Pays via Airbnb payouts", sample:true},
+    {id:h2, name:"Blue Door Properties", platform:"Direct", contact:"(555) 014-2280", notes:"Pays by check on Fridays", sample:true},
+    {id:h3, name:"James Okafor", platform:"Vrbo", contact:"james.o@example.com", notes:"", sample:true}
+  ];
+  var p1 = uid(), p2 = uid(), p3 = uid(), p4 = uid();
+  function chk(extra){ return DEFAULT_CHECKLIST.concat(extra || []); }
+  s.properties = [
+    {id:p1, hostId:h1, name:"Lakeview Cottage", address:"14 Shoreline Dr", beds:3, baths:2, fee:120, access:"Lockbox 4417 by the side door", checklist:chk(["Refill coffee and tea basket"]), sample:true},
+    {id:p2, hostId:h1, name:"Downtown Loft", address:"820 Main St, Unit 5", beds:1, baths:1, fee:75, access:"Keypad 9021", checklist:chk(), sample:true},
+    {id:p3, hostId:h2, name:"Maple Street House", address:"311 Maple St", beds:4, baths:3, fee:160, access:"Garage code 7788", checklist:chk(["Check hot tub cover is latched"]), sample:true},
+    {id:p4, hostId:h3, name:"Riverbend Cabin", address:"6 Riverbend Ln", beds:2, baths:1, fee:95, access:"Key under the blue pot", checklist:chk(), sample:true}
+  ];
+  function job(date, propId, quoted, method, feePct, status, paid, received, supplies, miles, mins, checksDone, notes){
+    var prop = null; for (var i=0;i<s.properties.length;i++) if (s.properties[i].id===propId) prop = s.properties[i];
+    var cl = (prop ? prop.checklist : DEFAULT_CHECKLIST).map(function(item, ix){ return {item:item, done: ix < (checksDone||0)}; });
+    return {id:uid(), date:date, propertyId:propId, quoted:quoted, method:method, feePct:feePct,
+            status:status, paid:paid, received:received, supplies:supplies, miles:miles, minutes:mins,
+            checklist:cl, notes:notes||"", sample:true};
+  }
+  var j1 = job("2026-10-03", p1, 120, "marketplace", 12, "done", true, 105.60, 6.50, 14, 150, 9, "4 guests, easy turn");
+  var j2 = job("2026-10-05", p4, 95, "marketplace", 10, "done", true, 85.50, 4.25, 22, 120, 8, "");
+  var j3 = job("2026-10-10", p3, 160, "direct", 0, "done", true, 160, 9.00, 9, 210, 9, "Same-day turn, extra laundry");
+  var j4 = job("2026-10-12", p2, 75, "marketplace", 12, "done", true, 61.50, 3.75, 6, 75, 8, "Platform paid $4.50 less than quoted minus its own fee — see Payouts");
+  var j5 = job("2026-10-18", p1, 120, "marketplace", 12, "done", false, null, 5.25, 14, 140, 5, "Checkout was late — started 40 min behind");
+  var j6 = job("2026-10-30", p3, 160, "direct", 0, "scheduled", false, null, 0, 0, 0, 0, "");
+  s.jobs = [j1, j2, j3, j4, j5, j6];
+  s.mileage = [j1, j2, j3, j4, j5].map(function(j){
+    var prop = null; for (var i=0;i<s.properties.length;i++) if (s.properties[i].id===j.propertyId) prop = s.properties[i];
+    return {id:uid(), date:j.date, from:"Home", to: prop ? prop.name : "", miles:j.miles, jobId:j.id, sample:true};
+  });
+  s.restock = [
+    {id:uid(), propertyId:p1, item:"Toilet paper (rolls)", par:12, onHand:5, cost:0.60, sample:true},
+    {id:uid(), propertyId:p1, item:"Paper towels (rolls)", par:4, onHand:1, cost:1.25, sample:true},
+    {id:uid(), propertyId:p1, item:"Dish soap (bottles)", par:2, onHand:2, cost:2.40, sample:true},
+    {id:uid(), propertyId:p3, item:"Trash bags (boxes)", par:1, onHand:0, cost:8.90, sample:true},
+    {id:uid(), propertyId:p3, item:"Laundry pods", par:30, onHand:12, cost:0.42, sample:true}
+  ];
+  s.seeded = true;
+  return s;
+}
+
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){} }
+function load(){
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (raw) { var parsed = JSON.parse(raw); if (parsed && parsed.settings) { state = parsed; return; } }
+  } catch(e){}
+  state = seed(); save();
+}
+
+function hostById(id){ for (var i=0;i<state.hosts.length;i++) if (state.hosts[i].id===id) return state.hosts[i]; return null; }
+function propById(id){ for (var i=0;i<state.properties.length;i++) if (state.properties[i].id===id) return state.properties[i]; return null; }
+function jobById(id){ for (var i=0;i<state.jobs.length;i++) if (state.jobs[i].id===id) return state.jobs[i]; return null; }
+
+function jobFee(j){ return j.method === "marketplace" ? round2(num(j.quoted) * num(j.feePct) / 100) : 0; }
+function jobExpected(j){ return round2(num(j.quoted) - jobFee(j)); }
+function jobReceived(j){ return j.paid ? num(j.received) : 0; }
+function jobVariance(j){ return j.paid ? round2(jobReceived(j) - jobExpected(j)) : 0; }
+function jobProfit(j){ return round2(jobReceived(j) - num(j.supplies) - num(j.miles) * num(state.settings.mileRate)); }
+
+function hostSummary(hostId){
+  var sum = {cleans:0, quoted:0, fees:0, expected:0, received:0, variance:0, unpaidCount:0, unpaidTotal:0};
+  state.jobs.forEach(function(j){
+    var p = propById(j.propertyId); if (!p || p.hostId !== hostId || j.status !== "done") return;
+    sum.cleans++;
+    sum.quoted = round2(sum.quoted + num(j.quoted));
+    if (j.paid) { sum.fees = round2(sum.fees + jobFee(j)); sum.expected = round2(sum.expected + jobExpected(j)); sum.received = round2(sum.received + jobReceived(j)); sum.variance = round2(sum.variance + jobVariance(j)); }
+    else { sum.unpaidCount++; sum.unpaidTotal = round2(sum.unpaidTotal + num(j.quoted)); }
+  });
+  return sum;
+}
+
+/* ================= rendering ================= */
+function $(id){ return document.getElementById(id); }
+var editingJob = null, editingHost = null, editingProp = null;
+
+function showView(name){
+  var views = document.querySelectorAll("section.view");
+  for (var i=0;i<views.length;i++) views[i].classList.toggle("active", views[i].id === "view-" + name);
+  var btns = document.querySelectorAll("#topnav button");
+  for (var j=0;j<btns.length;j++) btns[j].classList.toggle("active", btns[j].getAttribute("data-view") === name);
+  renderAll();
+}
+
+function renderAll(){
+  $("hdrBiz").textContent = state.settings.bizName ? esc(state.settings.bizName) : "";
+  renderDash(); renderJobForm(); renderJobList(); renderHosts(); renderProps(); renderTurn(); renderPayouts(); renderRestock(); renderMiles(); renderSettings();
+  $("demoCard").style.display = state.seeded ? "" : "none";
+}
+
+function renderDash(){
+  var m = monthStr();
+  var done = state.jobs.filter(function(j){ return j.status === "done" && j.date && j.date.slice(0,7) === m; });
+  var quoted = 0, received = 0, fees = 0, owed = 0, profit = 0;
+  done.forEach(function(j){ quoted = round2(quoted + num(j.quoted)); received = round2(received + jobReceived(j)); if (j.paid) fees = round2(fees + jobFee(j)); profit = round2(profit + jobProfit(j)); if (!j.paid) owed = round2(owed + num(j.quoted)); });
+  var sched = state.jobs.filter(function(j){ return j.status === "scheduled" && j.date >= todayStr(); });
+  $("dashKpis").innerHTML =
+    kpi(done.length, "Cleans done this month") +
+    kpi(fmt(quoted), "Quoted") +
+    kpi(fmt(received), "Actually received") +
+    kpi(fmt(fees), "Taken in platform fees") +
+    kpi(fmt(owed), "Still owed to you") +
+    kpi(fmt(profit), "Profit after supplies & miles");
+  $("dashNote").textContent = done.length ? "Profit = received − supplies used − miles × " + fmt(state.settings.mileRate) + "/mi. Fees are what marketplaces kept before paying you — the Payouts tab shows whether they kept more than they should have." : "No finished cleans logged this month yet. Log your first clean in the Jobs tab.";
+  var owedHtml = "";
+  state.hosts.forEach(function(h){
+    var s = hostSummary(h.id);
+    if (s.unpaidTotal > 0) owedHtml += "<p><b>" + esc(h.name) + "</b> — " + fmt(s.unpaidTotal) + " unpaid across " + s.unpaidCount + " clean" + (s.unpaidCount===1?"":"s") + "</p>";
+    if (s.variance < -0.004) owedHtml += "<p><b>" + esc(h.name) + "</b> — <span class='bad'>paid " + fmt(-s.variance) + " short</span> vs. quoted minus their own fee (see Payouts)</p>";
+  });
+  $("dashOwed").innerHTML = owedHtml || "<p class='muted'>Nobody owes you anything right now. 🎉</p>";
+  var up = sched.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; }).slice(0,6);
+  $("dashUpcoming").innerHTML = up.length ? up.map(function(j){ var p = propById(j.propertyId); return "<p><b>" + fmtDate(j.date) + "</b> — " + esc(p ? p.name : "?") + " (" + esc(p && hostById(p.hostId) ? hostById(p.hostId).name : "") + ") · " + fmt(j.quoted) + "</p>"; }).join("") : "<p class='muted'>No upcoming cleans scheduled.</p>";
+}
+function kpi(v, l){ return "<div class='k'><div class='v'>" + v + "</div><div class='l'>" + l + "</div></div>"; }
+
+function fillPropertySelect(sel, keepVal){
+  var cur = keepVal != null ? keepVal : sel.value;
+  sel.innerHTML = state.properties.map(function(p){ var h = hostById(p.hostId); return "<option value='" + p.id + "'>" + esc(p.name) + (h ? " (" + esc(h.name) + ")" : "") + "</option>"; }).join("");
+  if (cur && propById(cur)) sel.value = cur;
+}
+function fillHostSelect(sel, keepVal){
+  var cur = keepVal != null ? keepVal : sel.value;
+  sel.innerHTML = state.hosts.map(function(h){ return "<option value='" + h.id + "'>" + esc(h.name) + "</option>"; }).join("");
+  if (cur && hostById(cur)) sel.value = cur;
+}
+
+function renderJobForm(){
+  fillPropertySelect($("jProperty"));
+  if (!editingJob && !$("jDate").value) $("jDate").value = todayStr();
+  if (!editingJob && $("jFeePct").value === "") $("jFeePct").value = state.settings.defaultFeePct;
+}
+function renderJobList(){
+  fillHostSelectFiltered();
+  var fh = $("jobFilterHost").value, fs = $("jobFilterStatus").value;
+  var rows = state.jobs.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }).filter(function(j){
+    var p = propById(j.propertyId);
+    if (fh && (!p || p.hostId !== fh)) return false;
+    if (fs === "done" && j.status !== "done") return false;
+    if (fs === "scheduled" && j.status !== "scheduled") return false;
+    if (fs === "unpaid" && !(j.status === "done" && !j.paid)) return false;
+    return true;
+  });
+  var tq = 0, tr = 0, tp = 0;
+  $("jobRows").innerHTML = rows.map(function(j){
+    var p = propById(j.propertyId); var h = p ? hostById(p.hostId) : null;
+    if (j.status === "done") { tq = round2(tq + num(j.quoted)); tr = round2(tr + jobReceived(j)); tp = round2(tp + jobProfit(j)); }
+    var st = j.status === "done" ? "<span class='pill done'>Done</span>" : "<span class='pill sched'>Scheduled</span>";
+    var pay = j.status === "done" ? (j.paid ? " <span class='pill paid'>Paid</span>" : " <span class='pill unpaid'>Unpaid</span>") : "";
+    var varr = (j.paid && Math.abs(jobVariance(j)) > 0.004) ? "<br><span class='" + (jobVariance(j) < 0 ? "bad" : "good") + "'>" + (jobVariance(j) < 0 ? "short " : "over ") + fmt(Math.abs(jobVariance(j))) + "</span>" : "";
+    return "<tr><td>" + fmtDate(j.date) + "</td><td><b>" + esc(p ? p.name : "(deleted property)") + "</b><br><span class='muted'>" + esc(h ? h.name : "") + "</span></td>" +
+      "<td class='num'>" + fmt(j.quoted) + "</td><td class='num'>" + (j.method === "marketplace" ? fmt(jobFee(j)) : "—") + "</td>" +
+      "<td class='num'>" + (j.paid ? fmt(j.received) : "—") + varr + "</td><td>" + st + pay + "</td>" +
+      "<td><button class='btn small secondary' data-edit-job='" + j.id + "'>Edit</button> <button class='btn small danger' data-del-job='" + j.id + "'>Delete</button></td></tr>";
+  }).join("") || "<tr><td colspan='7' class='muted'>No cleans match. Log one above.</td></tr>";
+  $("jobTotals").textContent = "Shown finished cleans: quoted " + fmt(tq) + " · received " + fmt(tr) + " · profit after supplies & miles " + fmt(tp);
+  bindRowButtons();
+}
+function fillHostSelectFiltered(){
+  var sel = $("jobFilterHost"); var cur = sel.value;
+  sel.innerHTML = "<option value=''>All hosts</option>" + state.hosts.map(function(h){ return "<option value='" + h.id + "'>" + esc(h.name) + "</option>"; }).join("");
+  sel.value = cur;
+}
+
+function renderHosts(){
+  fillHostSelect($("pHost"));
+  $("hostList").innerHTML = state.hosts.length ? state.hosts.map(function(h){
+    var s = hostSummary(h.id);
+    var pc = state.properties.filter(function(p){ return p.hostId === h.id; }).length;
+    return "<p><b>" + esc(h.name) + "</b> <span class='muted'>· " + esc(h.platform) + (h.contact ? " · " + esc(h.contact) : "") + "</span><br>" +
+      "<span class='muted'>" + pc + " propert" + (pc===1?"y":"ies") + " · " + s.cleans + " cleans · quoted " + fmt(s.quoted) + " · received " + fmt(s.received) + (s.unpaidTotal > 0 ? " · <span class='bad'>" + fmt(s.unpaidTotal) + " unpaid</span>" : "") + "</span>" +
+      (h.notes ? "<br><span class='muted'>" + esc(h.notes) + "</span>" : "") +
+      "<br><button class='btn small secondary' data-edit-host='" + h.id + "'>Edit</button> <button class='btn small danger' data-del-host='" + h.id + "'>Delete</button></p>";
+  }).join("") : "<p class='muted'>No hosts yet — add your first host above.</p>";
+  bindRowButtons();
+}
+function renderProps(){
+  $("propList").innerHTML = state.properties.length ? state.properties.map(function(p){
+    var h = hostById(p.hostId);
+    var cleans = state.jobs.filter(function(j){ return j.propertyId === p.id && j.status === "done"; }).length;
+    return "<p><b>" + esc(p.name) + "</b> <span class='muted'>· " + esc(h ? h.name : "?") + (p.address ? " · " + esc(p.address) : "") + "</span><br>" +
+      "<span class='muted'>" + num(p.beds) + " bd / " + num(p.baths) + " ba · standard fee " + fmt(p.fee) + " · " + cleans + " cleans logged · checklist of " + (p.checklist ? p.checklist.length : 0) + "</span>" +
+      (p.access ? "<br><span class='muted'>Access: " + esc(p.access) + "</span>" : "") +
+      "<br><button class='btn small secondary' data-edit-prop='" + p.id + "'>Edit</button> <button class='btn small danger' data-del-prop='" + p.id + "'>Delete</button></p>";
+  }).join("") : "<p class='muted'>No properties yet — add one above (add its host first).</p>";
+  bindRowButtons();
+}
+
+function renderTurn(){
+  var sel = $("turnJob"); var cur = sel.value;
+  var jobs = state.jobs.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  sel.innerHTML = jobs.map(function(j){ var p = propById(j.propertyId); return "<option value='" + j.id + "'>" + fmtDate(j.date) + " — " + esc(p ? p.name : "?") + " (" + j.status + ")</option>"; }).join("") || "<option value=''>No cleans yet</option>";
+  if (cur && jobById(cur)) sel.value = cur;
+  var j = jobById(sel.value);
+  if (!j) { $("turnBody").innerHTML = "<p class='muted'>Log a clean in the Jobs tab first.</p>"; }
+  else {
+    var done = j.checklist.filter(function(c){ return c.done; }).length;
+    var pct = j.checklist.length ? Math.round(done / j.checklist.length * 100) : 0;
+    var p = propById(j.propertyId);
+    $("turnBody").innerHTML = "<h3>" + esc(p ? p.name : "") + " — " + fmtDate(j.date) + "</h3>" +
+      (p && p.access ? "<p class='muted'>Access: " + esc(p.access) + "</p>" : "") +
+      "<div class='progress'><i style='width:" + pct + "%'></i></div><p class='muted'>" + done + " of " + j.checklist.length + " items done (" + pct + "%)</p>" +
+      j.checklist.map(function(c, ix){ return "<div class='chk'><input type='checkbox' data-chk='" + j.id + ":" + ix + "'" + (c.done ? " checked" : "") + "><span class='" + (c.done ? "done-t" : "") + "'>" + esc(c.item) + "</span></div>"; }).join("") +
+      (j.notes ? "<p class='muted'>Notes: " + esc(j.notes) + "</p>" : "");
+  }
+  var log = state.jobs.filter(function(x){ return x.status === "done"; }).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  $("cleanLog").innerHTML = log.length ? log.map(function(x){
+    var pp = propById(x.propertyId); var d = x.checklist.filter(function(c){ return c.done; }).length;
+    return "<p><b>" + fmtDate(x.date) + "</b> — " + esc(pp ? pp.name : "?") + " · checklist " + d + "/" + x.checklist.length + " · " + fmt(x.quoted) + (x.paid ? " · paid " + fmt(x.received) : " · <span class='bad'>unpaid</span>") + (x.notes ? "<br><span class='muted'>" + esc(x.notes) + "</span>" : "") + "</p>";
+  }).join("") : "<p class='muted'>No completed cleans yet.</p>";
+  var boxes = document.querySelectorAll("[data-chk]");
+  for (var i=0;i<boxes.length;i++) boxes[i].addEventListener("change", onCheckToggle);
+}
+function onCheckToggle(ev){
+  var parts = ev.target.getAttribute("data-chk").split(":"); var j = jobById(parts[0]);
+  if (j && j.checklist[parseInt(parts[1],10)]) { j.checklist[parseInt(parts[1],10)].done = ev.target.checked; save(); renderTurn(); }
+}
+
+function renderPayouts(){
+  var tot = {cleans:0, quoted:0, fees:0, expected:0, received:0, variance:0, unpaidTotal:0};
+  $("payRows").innerHTML = state.hosts.map(function(h){
+    var s = hostSummary(h.id);
+    tot.cleans += s.cleans; tot.quoted = round2(tot.quoted + s.quoted); tot.fees = round2(tot.fees + s.fees);
+    tot.expected = round2(tot.expected + s.expected); tot.received = round2(tot.received + s.received);
+    tot.variance = round2(tot.variance + s.variance); tot.unpaidTotal = round2(tot.unpaidTotal + s.unpaidTotal);
+    return "<tr><td><b>" + esc(h.name) + "</b><br><span class='muted'>" + esc(h.platform) + "</span></td><td class='num'>" + s.cleans + "</td>" +
+      "<td class='num'>" + fmt(s.quoted) + "</td><td class='num'>" + fmt(s.fees) + "</td><td class='num'>" + fmt(s.expected) + "</td>" +
+      "<td class='num'>" + fmt(s.received) + "</td><td class='num " + (s.variance < -0.004 ? "bad" : (s.variance > 0.004 ? "good" : "")) + "'>" + fmt(s.variance) + "</td>" +
+      "<td class='num'>" + (s.unpaidTotal > 0 ? fmt(s.unpaidTotal) : "—") + "</td></tr>";
+  }).join("") || "<tr><td colspan='8' class='muted'>No hosts yet.</td></tr>";
+  $("payFoot").innerHTML = "<tr><th>All hosts</th><th class='num'>" + tot.cleans + "</th><th class='num'>" + fmt(tot.quoted) + "</th><th class='num'>" + fmt(tot.fees) + "</th><th class='num'>" + fmt(tot.expected) + "</th><th class='num'>" + fmt(tot.received) + "</th><th class='num'>" + fmt(tot.variance) + "</th><th class='num'>" + fmt(tot.unpaidTotal) + "</th></tr>";
+  fillHostSelect($("stmtHost"));
+  if (!$("stmtMonth").value) $("stmtMonth").value = monthStr();
+  renderStatement();
+}
+function renderStatement(){
+  $("stmtBody").innerHTML = statementHTML();
+}
+function statementHTML(){
+  var h = hostById($("stmtHost").value); var m = $("stmtMonth").value || monthStr();
+  if (!h) { return "<p class='muted'>Add a host to generate a statement.</p>"; }
+  var rows = state.jobs.filter(function(j){ var p = propById(j.propertyId); return p && p.hostId === h.id && j.status === "done" && j.date && j.date.slice(0,7) === m; })
+    .sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  var tq=0, tf=0, te=0, tr=0, tv=0;
+  var body = rows.map(function(j){
+    var p = propById(j.propertyId);
+    tq = round2(tq + num(j.quoted)); tf = round2(tf + jobFee(j)); te = round2(te + jobExpected(j)); tr = round2(tr + jobReceived(j)); if (j.paid) tv = round2(tv + jobVariance(j));
+    return "<tr><td>" + fmtDate(j.date) + "</td><td>" + esc(p ? p.name : "?") + "</td><td class='num'>" + fmt(j.quoted) + "</td><td class='num'>" + fmt(jobFee(j)) + "</td><td class='num'>" + fmt(jobExpected(j)) + "</td><td class='num'>" + (j.paid ? fmt(j.received) : "UNPAID") + "</td><td class='num'>" + (j.paid ? fmt(jobVariance(j)) : "—") + "</td></tr>";
+  }).join("");
+  return "<h3>" + esc(state.settings.bizName || "Turnover cleaning") + " — payout statement</h3>" +
+    "<p><b>Host:</b> " + esc(h.name) + " (" + esc(h.platform) + ") · <b>Month:</b> " + esc(m) + "</p>" +
+    "<div class='tblwrap'><table><thead><tr><th>Date</th><th>Property</th><th class='num'>Quoted</th><th class='num'>Fee</th><th class='num'>Expected</th><th class='num'>Received</th><th class='num'>Variance</th></tr></thead><tbody>" +
+    (body || "<tr><td colspan='7' class='muted'>No finished cleans for this host in this month.</td></tr>") +
+    "</tbody><tfoot><tr><th colspan='2'>Totals</th><th class='num'>" + fmt(tq) + "</th><th class='num'>" + fmt(tf) + "</th><th class='num'>" + fmt(te) + "</th><th class='num'>" + fmt(tr) + "</th><th class='num'>" + fmt(tv) + "</th></tr></tfoot></table></div>" +
+    "<p class='muted'>Variance totals paid cleans only — what the platform actually sent vs. quoted minus its own fee. Unpaid cleans are owed in full and tracked in the Payouts tab.</p>";
+}
+
+function renderRestock(){
+  fillPropertySelect($("rProperty"));
+  var byProp = {};
+  state.restock.forEach(function(r){ (byProp[r.propertyId] = byProp[r.propertyId] || []).push(r); });
+  var totalCost = 0, html = "";
+  Object.keys(byProp).forEach(function(pid){
+    var p = propById(pid); var items = byProp[pid];
+    var needRows = items.map(function(r){
+      var need = Math.max(0, num(r.par) - num(r.onHand));
+      if (need > 0) totalCost = round2(totalCost + need * num(r.cost));
+      return "<tr><td>" + esc(r.item) + "</td><td class='num'>" + num(r.par) + "</td><td class='num'>" + num(r.onHand) + "</td>" +
+        "<td class='num'>" + (need > 0 ? "<span class='pill low'>Bring " + need + "</span>" : "<span class='good'>OK</span>") + "</td>" +
+        "<td><button class='btn small secondary' data-topup='" + r.id + "'>Restocked</button> <button class='btn small danger' data-del-restock='" + r.id + "'>Delete</button></td></tr>";
+    }).join("");
+    html += "<h3>" + esc(p ? p.name : "(deleted property)") + "</h3><div class='tblwrap'><table><thead><tr><th>Item</th><th class='num'>Par</th><th class='num'>On hand</th><th class='num'>Status</th><th></th></tr></thead><tbody>" + needRows + "</tbody></table></div>";
+  });
+  $("restockList").innerHTML = html || "<p class='muted'>No supply items tracked yet. Add your first one above.</p>";
+  $("restockTotal").textContent = totalCost > 0 ? "Estimated cost to bring everything back to par: " + fmt(totalCost) : "Everything is at or above par.";
+  bindRowButtons();
+}
+
+function renderMiles(){
+  var rows = state.mileage.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  var tm = 0;
+  $("mileRows").innerHTML = rows.map(function(t){
+    tm = round2(tm + num(t.miles));
+    return "<tr><td>" + fmtDate(t.date) + "</td><td>" + esc(t.from) + " → " + esc(t.to) + "</td><td class='num'>" + num(t.miles) + "</td><td class='num'>" + fmt(num(t.miles) * num(state.settings.mileRate)) + "</td><td><button class='btn small danger' data-del-trip='" + t.id + "'>Delete</button></td></tr>";
+  }).join("") || "<tr><td colspan='5' class='muted'>No trips logged yet.</td></tr>";
+  $("mileTotals").textContent = "Total: " + tm + " miles · worth " + fmt(tm * num(state.settings.mileRate)) + " at " + fmt(state.settings.mileRate) + "/mi. Keep this log with your tax records — date, route and miles is what a mileage deduction needs.";
+  bindRowButtons();
+}
+function renderSettings(){
+  if (document.activeElement !== $("sBiz")) $("sBiz").value = state.settings.bizName || "";
+  if (document.activeElement !== $("sFeePct")) $("sFeePct").value = state.settings.defaultFeePct;
+  if (document.activeElement !== $("sMileRate")) $("sMileRate").value = state.settings.mileRate;
+}
+
+/* ================= actions ================= */
+function bindRowButtons(){
+  var map = [
+    ["data-edit-job", editJob], ["data-del-job", delJob],
+    ["data-edit-host", editHost], ["data-del-host", delHost],
+    ["data-edit-prop", editProp], ["data-del-prop", delProp],
+    ["data-del-restock", delRestock], ["data-topup", topUp],
+    ["data-del-trip", delTrip]
+  ];
+  map.forEach(function(pair){
+    var els = document.querySelectorAll("[" + pair[0] + "]");
+    for (var i=0;i<els.length;i++){
+      if (els[i]._bound) continue; els[i]._bound = true;
+      (function(el, fn){ el.addEventListener("click", function(){ fn(el.getAttribute(pair[0])); }); })(els[i], pair[1]);
+    }
+  });
+}
+
+function editJob(id){
+  var j = jobById(id); if (!j) return;
+  editingJob = id;
+  $("jDate").value = j.date; fillPropertySelect($("jProperty"), j.propertyId);
+  $("jQuoted").value = j.quoted; $("jMethod").value = j.method; $("jFeePct").value = j.feePct;
+  $("jStatus").value = j.status; $("jPaid").value = j.paid ? "yes" : "no";
+  $("jReceived").value = j.paid ? j.received : ""; $("jSupplies").value = j.supplies || "";
+  $("jMiles").value = j.miles || ""; $("jMinutes").value = j.minutes || ""; $("jNotes").value = j.notes || "";
+  $("jobFormTitle").textContent = "Edit clean — " + fmtDate(j.date);
+  $("btnSaveJob").textContent = "Save changes"; $("btnCancelJobEdit").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function clearJobForm(){
+  editingJob = null;
+  $("jDate").value = todayStr(); $("jQuoted").value = ""; $("jReceived").value = ""; $("jSupplies").value = "";
+  $("jMiles").value = ""; $("jMinutes").value = ""; $("jNotes").value = ""; $("jErr").textContent = "";
+  $("jStatus").value = "done"; $("jPaid").value = "no"; $("jMethod").value = "marketplace"; $("jFeePct").value = state.settings.defaultFeePct;
+  $("jobFormTitle").textContent = "Log a clean"; $("btnSaveJob").textContent = "Save clean"; $("btnCancelJobEdit").classList.add("hidden");
+}
+function saveJob(){
+  var err = $("jErr"); err.textContent = "";
+  var date = $("jDate").value, propId = $("jProperty").value;
+  var quoted = num($("jQuoted").value);
+  if (!date) { err.textContent = "Pick a date for the clean."; return; }
+  if (!propById(propId)) { err.textContent = "Add a property first (Hosts & Properties tab)."; return; }
+  if (quoted <= 0) { err.textContent = "Quoted price must be more than $0."; return; }
+  var method = $("jMethod").value;
+  var feePct = Math.min(100, Math.max(0, num($("jFeePct").value)));
+  var paid = $("jPaid").value === "yes";
+  var status = $("jStatus").value;
+  var received = $("jReceived").value === "" ? null : num($("jReceived").value);
+  var draft = { date:date, propertyId:propId, quoted:round2(quoted), method:method, feePct:feePct,
+    status:status, paid:paid, supplies:Math.max(0, num($("jSupplies").value)),
+    miles:Math.max(0, num($("jMiles").value)), minutes:Math.max(0, Math.round(num($("jMinutes").value))), notes:$("jNotes").value.trim() };
+  if (draft.paid && received === null) draft.received = round2(draft.quoted - (method === "marketplace" ? round2(draft.quoted * feePct / 100) : 0));
+  else draft.received = received === null ? null : round2(Math.max(0, received));
+  var j;
+  if (editingJob && jobById(editingJob)) { j = jobById(editingJob); for (var k in draft) j[k] = draft[k]; }
+  else {
+    var p = propById(propId);
+    draft.id = uid();
+    draft.checklist = (p.checklist || DEFAULT_CHECKLIST).map(function(item){ return {item:item, done:false}; });
+    state.jobs.push(draft); j = draft;
+  }
+  syncMileageForJob(j);
+  save(); clearJobForm(); renderAll();
+}
+function syncMileageForJob(j){
+  var existing = null;
+  for (var i=0;i<state.mileage.length;i++) if (state.mileage[i].jobId === j.id) existing = state.mileage[i];
+  if (num(j.miles) > 0 && j.status === "done") {
+    var p = propById(j.propertyId);
+    if (existing) { existing.date = j.date; existing.miles = j.miles; existing.to = p ? p.name : ""; }
+    else state.mileage.push({id:uid(), date:j.date, from:"Home", to: p ? p.name : "", miles:j.miles, jobId:j.id});
+  } else if (existing) {
+    state.mileage = state.mileage.filter(function(t){ return t.id !== existing.id; });
+  }
+}
+function delJob(id){
+  var j = jobById(id); if (!j) return;
+  if (!confirm("Delete this clean (" + fmtDate(j.date) + ", " + fmt(j.quoted) + ")? Its auto mileage entry goes too.")) return;
+  state.jobs = state.jobs.filter(function(x){ return x.id !== id; });
+  state.mileage = state.mileage.filter(function(t){ return t.jobId !== id; });
+  if (editingJob === id) clearJobForm();
+  save(); renderAll();
+}
+
+function editHost(id){
+  var h = hostById(id); if (!h) return;
+  editingHost = id;
+  $("hName").value = h.name; $("hPlatform").value = h.platform; $("hContact").value = h.contact || ""; $("hNotes").value = h.notes || "";
+  $("hostFormTitle").textContent = "Edit host"; $("btnSaveHost").textContent = "Save changes"; $("btnCancelHostEdit").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function clearHostForm(){
+  editingHost = null; $("hName").value = ""; $("hContact").value = ""; $("hNotes").value = ""; $("hErr").textContent = "";
+  $("hostFormTitle").textContent = "Add a host"; $("btnSaveHost").textContent = "Save host"; $("btnCancelHostEdit").classList.add("hidden");
+}
+function saveHost(){
+  var name = $("hName").value.trim();
+  if (!name) { $("hErr").textContent = "The host needs a name."; return; }
+  if (editingHost && hostById(editingHost)) { var h = hostById(editingHost); h.name = name; h.platform = $("hPlatform").value; h.contact = $("hContact").value.trim(); h.notes = $("hNotes").value.trim(); }
+  else state.hosts.push({id:uid(), name:name, platform:$("hPlatform").value, contact:$("hContact").value.trim(), notes:$("hNotes").value.trim()});
+  save(); clearHostForm(); renderAll();
+}
+function delHost(id){
+  var h = hostById(id); if (!h) return;
+  var pc = state.properties.filter(function(p){ return p.hostId === id; }).length;
+  if (pc > 0) { alert("This host still has " + pc + " propert" + (pc===1?"y":"ies") + " attached. Delete or reassign those first."); return; }
+  if (!confirm("Delete host " + h.name + "?")) return;
+  state.hosts = state.hosts.filter(function(x){ return x.id !== id; });
+  if (editingHost === id) clearHostForm();
+  save(); renderAll();
+}
+
+function editProp(id){
+  var p = propById(id); if (!p) return;
+  editingProp = id;
+  $("pName").value = p.name; fillHostSelect($("pHost"), p.hostId);
+  $("pAddress").value = p.address || ""; $("pBeds").value = p.beds; $("pBaths").value = p.baths;
+  $("pFee").value = p.fee; $("pAccess").value = p.access || "";
+  $("pChecklist").value = (p.checklist || []).join("\n");
+  $("propFormTitle").textContent = "Edit property"; $("btnSaveProp").textContent = "Save changes"; $("btnCancelPropEdit").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function clearPropForm(){
+  editingProp = null; $("pName").value = ""; $("pAddress").value = ""; $("pBeds").value = ""; $("pBaths").value = "";
+  $("pFee").value = ""; $("pAccess").value = ""; $("pErr").textContent = "";
+  $("pChecklist").value = DEFAULT_CHECKLIST.join("\n");
+  $("propFormTitle").textContent = "Add a property"; $("btnSaveProp").textContent = "Save property"; $("btnCancelPropEdit").classList.add("hidden");
+}
+function saveProp(){
+  var name = $("pName").value.trim();
+  if (!name) { $("pErr").textContent = "The property needs a name."; return; }
+  var hostId = $("pHost").value;
+  if (!hostById(hostId)) { $("pErr").textContent = "Add a host first, then the property."; return; }
+  var checklist = $("pChecklist").value.split("\n").map(function(x){ return x.trim(); }).filter(function(x){ return x.length > 0; });
+  if (!checklist.length) checklist = DEFAULT_CHECKLIST.slice();
+  var data = { name:name, hostId:hostId, address:$("pAddress").value.trim(), beds:Math.max(0, num($("pBeds").value)),
+    baths:Math.max(0, num($("pBaths").value)), fee:Math.max(0, num($("pFee").value)), access:$("pAccess").value.trim(), checklist:checklist };
+  if (editingProp && propById(editingProp)) { var p = propById(editingProp); for (var k in data) p[k] = data[k]; }
+  else { data.id = uid(); state.properties.push(data); }
+  save(); clearPropForm(); renderAll();
+}
+function delProp(id){
+  var p = propById(id); if (!p) return;
+  var jc = state.jobs.filter(function(j){ return j.propertyId === id; }).length;
+  var msg = "Delete property " + p.name + "?" + (jc ? " Its " + jc + " logged clean(s) stay in the ledger but will show as (deleted property)." : "");
+  if (!confirm(msg)) return;
+  state.properties = state.properties.filter(function(x){ return x.id !== id; });
+  state.restock = state.restock.filter(function(r){ return r.propertyId !== id; });
+  if (editingProp === id) clearPropForm();
+  save(); renderAll();
+}
+
+function saveRestock(){
+  var item = $("rItem").value.trim();
+  if (!item) { $("rErr").textContent = "Name the supply item."; return; }
+  var propId = $("rProperty").value;
+  if (!propById(propId)) { $("rErr").textContent = "Add a property first."; return; }
+  state.restock.push({id:uid(), propertyId:propId, item:item, par:Math.max(0, Math.round(num($("rPar").value))), onHand:Math.max(0, Math.round(num($("rOnHand").value))), cost:Math.max(0, num($("rCost").value))});
+  $("rItem").value = ""; $("rPar").value = ""; $("rOnHand").value = ""; $("rCost").value = ""; $("rErr").textContent = "";
+  save(); renderAll();
+}
+function topUp(id){
+  var r = null;
+  for (var i=0;i<state.restock.length;i++) if (state.restock[i].id === id) r = state.restock[i];
+  if (!r) return;
+  var p = propById(r.propertyId);
+  if (!confirm("Mark \"" + r.item + "\"" + (p ? " at " + p.name : "") + " as restocked — on hand goes from " + num(r.onHand) + " up to par (" + num(r.par) + ")?")) return;
+  r.onHand = r.par;
+  save(); renderAll();
+}
+function delRestock(id){
+  var r = null;
+  for (var i=0;i<state.restock.length;i++) if (state.restock[i].id === id) r = state.restock[i];
+  if (!r) return;
+  var p = propById(r.propertyId);
+  if (!confirm("Delete the supply item \"" + r.item + "\"" + (p ? " at " + p.name : "") + " from the restock list? This cannot be undone.")) return;
+  state.restock = state.restock.filter(function(x){ return x.id !== id; }); save(); renderAll();
+}
+
+function saveTrip(){
+  var miles = num($("mMiles").value);
+  if (!$("mDate").value) { $("mErr").textContent = "Pick the trip date."; return; }
+  if (miles <= 0) { $("mErr").textContent = "Miles must be more than 0."; return; }
+  state.mileage.push({id:uid(), date:$("mDate").value, from:$("mFrom").value.trim() || "Home", to:$("mTo").value.trim() || "—", miles:miles, jobId:null});
+  $("mMiles").value = ""; $("mTo").value = ""; $("mErr").textContent = "";
+  save(); renderAll();
+}
+function delTrip(id){
+  var t = null;
+  for (var i=0;i<state.mileage.length;i++) if (state.mileage[i].id === id) t = state.mileage[i];
+  if (!t) return;
+  if (!confirm("Delete this trip — " + fmtDate(t.date) + ", " + t.from + " → " + t.to + ", " + num(t.miles) + " miles? This cannot be undone.")) return;
+  state.mileage = state.mileage.filter(function(x){ return x.id !== id; }); save(); renderAll();
+}
+
+function saveSettings(){
+  state.settings.bizName = $("sBiz").value.trim();
+  state.settings.defaultFeePct = Math.min(100, Math.max(0, num($("sFeePct").value)));
+  state.settings.mileRate = Math.max(0, num($("sMileRate").value));
+  save(); renderAll();
+  $("backupNote").textContent = "Settings saved.";
+}
+
+function removeSamples(){
+  if (!confirm("Remove all sample hosts, properties, cleans, supplies and trips? Your settings stay.")) return;
+  state.hosts = state.hosts.filter(function(x){ return !x.sample; });
+  state.properties = state.properties.filter(function(x){ return !x.sample; });
+  state.jobs = state.jobs.filter(function(x){ return !x.sample; });
+  state.restock = state.restock.filter(function(x){ return !x.sample; });
+  state.mileage = state.mileage.filter(function(x){ return !x.sample; });
+  /* The seeded sample business name must not survive onto the user's real statements. */
+  if (state.settings.bizName === "Sparkle Turn Co.") state.settings.bizName = "";
+  state.seeded = false;
+  clearJobForm(); clearHostForm(); clearPropForm();
+  save(); renderAll();
+}
+function eraseAll(){
+  if (!confirm("Erase EVERYTHING in TurnBook on this device — hosts, properties, cleans, all of it?")) return;
+  if (!confirm("Really erase? There is no undo. (Export a backup first if you might want it back.)")) return;
+  state = defaultState(); save();
+  clearJobForm(); clearHostForm(); clearPropForm();
+  renderAll();
+}
+function exportBackup(){
+  var blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "turnbook-backup-" + todayStr() + ".json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+}
+function importBackup(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    try {
+      var parsed = JSON.parse(reader.result);
+      if (!parsed || !parsed.settings || !Array.isArray(parsed.hosts) || !Array.isArray(parsed.jobs)) throw new Error("shape");
+      state = sanitize(parsed);
+      save(); clearJobForm(); clearHostForm(); clearPropForm(); renderAll();
+      $("backupNote").textContent = "Backup imported — " + state.jobs.length + " cleans, " + state.properties.length + " properties restored.";
+    } catch(e) {
+      $("backupNote").textContent = "That file could not be imported — it doesn't look like a TurnBook backup. Nothing was changed.";
+    }
+  };
+  reader.readAsText(file);
+}
+function sanitize(s){
+  var out = defaultState();
+  if (s && s.legal && typeof s.legal === "object") out.legal = { termsVersion: String(s.legal.termsVersion || ""), acceptedDate: String(s.legal.acceptedDate || ""), disclaimerShown: !!s.legal.disclaimerShown };
+  out.settings = { bizName:String((s.settings && s.settings.bizName) || ""), defaultFeePct:Math.min(100, Math.max(0, num(s.settings && s.settings.defaultFeePct))), mileRate:Math.max(0, num(s.settings && s.settings.mileRate)) };
+  function arr(x){ return Array.isArray(x) ? x : []; }
+  out.hosts = arr(s.hosts).filter(function(h){ return h && h.id && h.name; }).map(function(h){ return {id:String(h.id), name:String(h.name), platform:String(h.platform || "Other"), contact:String(h.contact || ""), notes:String(h.notes || ""), sample:!!h.sample}; });
+  out.properties = arr(s.properties).filter(function(p){ return p && p.id && p.name; }).map(function(p){ return {id:String(p.id), hostId:String(p.hostId || ""), name:String(p.name), address:String(p.address || ""), beds:num(p.beds), baths:num(p.baths), fee:num(p.fee), access:String(p.access || ""), checklist: arr(p.checklist).map(String).filter(function(x){return x.length;}), sample:!!p.sample}; });
+  out.jobs = arr(s.jobs).filter(function(j){ return j && j.id && j.date; }).map(function(j){ return {id:String(j.id), date:String(j.date || ""), propertyId:String(j.propertyId || ""), quoted:num(j.quoted), method: j.method === "direct" ? "direct" : "marketplace", feePct:Math.min(100, Math.max(0, num(j.feePct))), status: j.status === "scheduled" ? "scheduled" : "done", paid:!!j.paid, received: j.received === null || j.received === undefined ? null : num(j.received), supplies:num(j.supplies), miles:num(j.miles), minutes:num(j.minutes), notes:String(j.notes || ""), checklist: arr(j.checklist).map(function(c){ return {item:String((c && c.item) || ""), done:!!(c && c.done)}; }), sample:!!j.sample}; });
+  out.restock = arr(s.restock).filter(function(r){ return r && r.id; }).map(function(r){ return {id:String(r.id), propertyId:String(r.propertyId || ""), item:String(r.item || ""), par:num(r.par), onHand:num(r.onHand), cost:num(r.cost), sample:!!r.sample}; });
+  out.mileage = arr(s.mileage).filter(function(t){ return t && t.id; }).map(function(t){ return {id:String(t.id), date:String(t.date || ""), from:String(t.from || ""), to:String(t.to || ""), miles:num(t.miles), jobId: t.jobId ? String(t.jobId) : null, sample:!!t.sample}; });
+  out.seeded = !!s.seeded;
+  return out;
+}
+
+/* ================= wiring ================= */
+function init(){
+  load();
+  var navBtns = document.querySelectorAll("#topnav button");
+  for (var i=0;i<navBtns.length;i++) (function(b){ b.addEventListener("click", function(){ showView(b.getAttribute("data-view")); }); })(navBtns[i]);
+  $("btnSaveJob").addEventListener("click", saveJob);
+  $("btnCancelJobEdit").addEventListener("click", function(){ clearJobForm(); renderAll(); });
+  $("btnSaveHost").addEventListener("click", saveHost);
+  $("btnCancelHostEdit").addEventListener("click", function(){ clearHostForm(); renderAll(); });
+  $("btnSaveProp").addEventListener("click", saveProp);
+  $("btnCancelPropEdit").addEventListener("click", function(){ clearPropForm(); renderAll(); });
+  $("btnSaveRestock").addEventListener("click", saveRestock);
+  $("btnSaveTrip").addEventListener("click", saveTrip);
+  $("btnSaveSettings").addEventListener("click", saveSettings);
+  $("btnRemoveSamples").addEventListener("click", removeSamples);
+  $("btnErase").addEventListener("click", eraseAll);
+  $("btnExport").addEventListener("click", exportBackup);
+  $("btnImportBtn").addEventListener("click", function(){ $("fileImport").click(); });
+  $("fileImport").addEventListener("change", function(){ if (this.files && this.files[0]) importBackup(this.files[0]); this.value = ""; });
+  $("jobFilterHost").addEventListener("change", renderJobList);
+  $("jobFilterStatus").addEventListener("change", renderJobList);
+  $("turnJob").addEventListener("change", renderTurn);
+  $("stmtHost").addEventListener("change", renderStatement);
+  $("stmtMonth").addEventListener("change", renderStatement);
+  $("jProperty").addEventListener("change", function(){ var p = propById(this.value); if (p && !$("jQuoted").value) $("jQuoted").value = p.fee; });
+  $("btnPrintStmt").addEventListener("click", function(){
+    /* PRIVACY: print ONLY the selected host's statement — never the whole Payouts
+       view (which reconciles every host). The statement is rendered into a
+       print-only container and the app chrome is hidden for this print. */
+    $("stmtPrint").innerHTML = statementHTML();
+    document.body.classList.add("stmt-printing");
+    window.print();
+    document.body.classList.remove("stmt-printing");
+    $("stmtPrint").innerHTML = "";
+  });
+  $("btnPrintRestock").addEventListener("click", function(){
+    var v = $("view-restock"); v.classList.add("printing"); window.print(); v.classList.remove("printing");
+  });
+  $("jDate").value = todayStr();
+  $("mDate").value = todayStr();
+  $("pChecklist").value = DEFAULT_CHECKLIST.join("\n");
+  $("jFeePct").value = state.settings.defaultFeePct;
+  renderAll();
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+
+<style id="wwLegalCss">
+#wwLegalOverlay{position:fixed;inset:0;z-index:99990;background:rgba(10,12,16,.72);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:18px 12px;box-sizing:border-box}
+#wwLegalOverlay[hidden]{display:none}
+.ww-card{background:#fff;color:#16181d;max-width:560px;width:100%;border-radius:14px;padding:22px 20px;box-sizing:border-box;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.ww-appname{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#5b6472;font-weight:700}
+.ww-card h2{margin:6px 0 10px;font-size:24px}
+.ww-sum{font-size:17px;line-height:1.45;font-weight:600;margin:10px 0}
+.ww-follow{color:#444c58;font-size:14px;line-height:1.45}
+.ww-updated{background:#fff4d6;border:1px solid #e3c566;color:#5c4a00;border-radius:8px;padding:8px 10px;font-size:14px}
+.ww-btn{display:block;width:100%;min-height:48px;margin:10px 0 0;padding:12px 14px;font-size:16px;border-radius:10px;border:1px solid #9aa3af;background:#f2f4f7;color:#16181d;cursor:pointer;box-sizing:border-box}
+.ww-btn.ww-primary{background:#14532d;border-color:#14532d;color:#fff;font-weight:700;min-height:52px}
+.ww-btn.ww-primary:disabled{opacity:.45;cursor:not-allowed}
+.ww-check{display:flex;gap:10px;align-items:flex-start;margin:14px 0 2px;font-size:15px;line-height:1.4;color:#16181d;cursor:pointer}
+.ww-check input{width:22px;height:22px;flex:0 0 auto;margin:1px 0 0;accent-color:#14532d;cursor:pointer}
+#wwLegalPanel{position:fixed;inset:0;z-index:99995;background:#fff;color:#16181d;overflow-y:auto;box-sizing:border-box}
+#wwLegalPanel[hidden]{display:none}
+.ww-panel-inner{max-width:720px;margin:0 auto;padding:16px 18px 40px;box-sizing:border-box;line-height:1.55}
+.ww-panel-inner h3{margin-top:26px}
+.ww-panel-inner h4{margin-top:20px}
+.ww-accept{background:#eef7ee;border:1px solid #b9d8b9;border-radius:8px;padding:10px 12px}
+.ww-seller{margin-top:28px;padding-top:12px;border-top:1px solid #ddd;color:#444c58}
+#wwLegalClose{min-height:48px;padding:10px 16px;font-size:16px;border-radius:10px;border:1px solid #9aa3af;background:#f2f4f7;color:#16181d;cursor:pointer}
+[data-ww-legal-card]{border:1px solid #9aa3af;border-radius:12px;padding:14px;margin:14px 0;background:rgba(127,127,127,.06)}
+[data-ww-legal-btn]{min-height:48px;padding:10px 16px;font-size:16px;border-radius:10px;border:1px solid #14532d;background:#14532d;color:#fff;font-weight:700;cursor:pointer;width:100%}
+@media print{#wwLegalOverlay,#wwLegalPanel,[data-ww-legal-card]{display:none!important}}
+</style>
+
+<!-- ===== White Wolf Legal Pattern v1.0 ===== -->
+<div id="wwLegalOverlay" hidden>
+  <div class="ww-card" role="dialog" aria-modal="true" aria-labelledby="wwLegalTitle">
+    <div class="ww-appname">TurnBook</div>
+    <h2 id="wwLegalTitle">Terms of Use</h2>
+    <p class="ww-updated" id="wwUpdatedNote" hidden>Our terms were updated (v1.0).</p>
+    <p class="ww-sum">Your data stays on your device.<br>Estimates are aids, not guarantees.<br>You&#39;re responsible for checking outputs before you rely on them.</p>
+    <p class="ww-follow">The full Terms and Disclaimer are one tap away, now and any time in Settings &#8594; Legal.</p>
+    <button type="button" class="ww-btn" id="wwReadTerms">Read the full Terms</button>
+    
+    <label class="ww-check"><input type="checkbox" id="wwAgreeCheck"> <span>I have read and I agree to the Terms of Use</span></label>
+    <button type="button" class="ww-btn ww-primary" id="wwAgree" disabled>I Agree</button>
+  </div>
+</div>
+<div id="wwLegalPanel" hidden>
+  <div class="ww-panel-inner">
+    <button type="button" id="wwLegalClose">&#8592; Back</button>
+    <h2>Legal</h2>
+    <p class="ww-accept" id="wwAcceptLine">You have not recorded acceptance of the Terms yet.</p>
+    <h3>Terms of Use</h3>
+    <p><strong>Version 1.0 (DRAFT — pending attorney review)</strong> <strong>Seller: White Wolf Tree Service LLC, selling digital products under the name "White Wolf Digital"</strong> <strong>Contact: whitewolfoklahoma@gmail.com</strong></p>
+<hr>
+<h4>1. What you're buying</h4>
+<p>Our apps (including ForgeFit AI, ForgeKitchen, TreeBid Pro, SnowBid, WashPrice Pro, RoofSquares, JobProfit Tracker, PastureLedger, and the other titles sold under White Wolf Digital) are single-file software tools. When you buy one, you are buying a <strong>license to use the file</strong>, not ownership of the software itself.</p>
+<h4>2. Your license</h4>
+<ul>
+<li>You may use the app for your own personal or business work.</li>
+<li>You may open it on your own devices (phone, tablet, computer) and move your</li>
+</ul>
+<p>own data between them using the app's built-in backup/export tools.</p>
+<ul>
+<li>You may <strong>not</strong> resell, redistribute, give away, upload, or share the app</li>
+</ul>
+<p>file (or a copy of it) with anyone else — including posting it online, bundling it with other products, or selling access to it.</p>
+<ul>
+<li>You may <strong>not</strong> claim the app as your own work, remove its branding or</li>
+</ul>
+<p>notices, or use it to build a competing product for resale.</p>
+<ul>
+<li>One purchase = one buyer. A business purchase covers the buyer and their</li>
+</ul>
+<p>own employees using it for that business's work; it does not cover other businesses.</p>
+<h4>3. Your data stays yours — and stays on your device</h4>
+<ul>
+<li>The current versions of our apps run <strong>entirely on your device</strong>. They have</li>
+</ul>
+<p>no accounts, no sign-in, no analytics, and they collect, transmit, and store <strong>none</strong> of your information on any server. We never see your data.</p>
+<ul>
+<li>Your records are stored in your browser/app storage on your device. **You</li>
+</ul>
+<p>are responsible for backing them up** using the app's export tools. If you clear your browser data, lose your device, or uninstall the app, your records may be permanently lost, and we cannot recover them — we never had a copy.</p>
+<ul>
+<li>Files you export (backups, quotes, PDFs) are under your control. Where you</li>
+</ul>
+<p>store or send them is up to you.</p>
+<h4>4. Estimates are tools, not guarantees</h4>
+<p>Every number our apps produce — bids, prices, costs, calorie targets, projections, schedules, totals — is an <strong>estimate generated from the information you enter and the settings you choose</strong>. Outputs are aids for your own judgment, not guarantees of price, profit, outcome, or result. You are responsible for checking any output before relying on it (see also the disclaimer that applies to your app: Health Disclaimer for fitness/nutrition apps, Estimator Disclaimer for contractor tools). If an input is wrong, the output will be wrong.</p>
+<h4>5. Acceptable use</h4>
+<p>Don't use the apps to break the law, infringe anyone's rights, or misrepresent quotes, invoices, or records to your own customers. For the fitness apps, the guardrails in the app (healthy-rate limits, calorie floor) are part of the product — don't treat the app as a way around them.</p>
+<h4>6. Provided "as is"</h4>
+<p>The apps are provided <strong>"as is" and "as available," without warranties of any kind</strong>, express or implied — including merchantability, fitness for a particular purpose, accuracy of calculations, and uninterrupted or error-free operation — to the maximum extent allowed by law. Software has bugs; browsers change; we work to fix problems but do not promise any app is error-free or will work on every device or browser forever.</p>
+<h4>7. Limitation of liability</h4>
+<p>To the maximum extent allowed by law:</p>
+<ul>
+<li>We are **not liable for indirect, incidental, special, or consequential</li>
+</ul>
+<p>damages** — including lost profits, lost or mispriced jobs, lost data, or business interruption — arising from use of the apps.</p>
+<ul>
+<li>Our total liability for any claim connected to an app is limited to the</li>
+</ul>
+<p><strong>amount you paid for that app</strong>.</p>
+<ul>
+<li>Nothing in these terms limits liability that cannot legally be limited.</li>
+</ul>
+<h4>8. Refunds</h4>
+<p>Refunds are handled <strong>by the storefront you bought from, under that storefront's policy</strong> — Gumroad's refund policy for Gumroad purchases, and Google Play's refund policy for Play purchases. These terms do not add to, replace, or override the storefront's refund rules. If a file is defective and won't open, contact us at whitewolfoklahoma@gmail.com and we'll fix or replace the file.</p>
+<h4>9. Updates and changes to these terms</h4>
+<ul>
+<li>We may release updated versions of an app. Updates may add, change, or</li>
+</ul>
+<p>remove features.</p>
+<ul>
+<li>We may update these terms. The version you agreed to is recorded in the</li>
+</ul>
+<p>app (version number and date) at first-run acceptance. If terms change, the app may ask you to accept the new version once on next open. Updated terms apply going forward, not retroactively.</p>
+<ul>
+<li>If you don't agree to an updated version of the terms, stop using the app.</li>
+</ul>
+<h4>10. Governing law</h4>
+<p>These terms are governed by the laws of the <strong>State of Oklahoma</strong>, USA. (Attorney to confirm governing law and venue before publication.)</p>
+<h4>11. Contact</h4>
+<p>White Wolf Tree Service LLC (White Wolf Digital) — whitewolfoklahoma@gmail.com.</p>
+<hr>
+<h4>CONNECTED FEATURES — takes effect only when these features ship</h4>
+<p><em>The sections below apply only to future connected features (device sync via Health Connect, AI voice logging, and the AI Goal Preview in ForgeFit). They do not apply to the current offline versions, which never transmit data.</em></p>
+<ul>
+<li><strong>Opt-in only.</strong> Connected features are off by default. Each one asks for</li>
+</ul>
+<p>your separate, explicit consent — on its own consent screen, in plain language — before anything leaves your device. Declining never disables the app's offline features.</p>
+<ul>
+<li><strong>What gets sent.</strong> Only what the consent screen names, only when you use</li>
+</ul>
+<p>the feature: for example, a meal description (text, or audio only if cloud transcription is on) for AI voice logging, or the single photo you choose for an AI Goal Preview.</p>
+<ul>
+<li><strong>No retention by us.</strong> Our relay service passes your request to the named</li>
+</ul>
+<p>AI provider and keeps nothing — no copies of your photos, audio, transcripts, or entries are stored on our servers. Provider handling is described on the consent screen and in the Privacy Policy.</p>
+<ul>
+<li><strong>Health data stays on the device.</strong> Device sync (Health Connect) reads</li>
+</ul>
+<p>your health data on your phone and stores it in the app on your phone. It is not uploaded to us.</p>
+<ul>
+<li><strong>Allowances.</strong> Some connected features run on third-party AI services we</li>
+</ul>
+<p>pay for per use, so they may include a monthly allowance described in the app (for example, a set number of AI previews or voice entries per month), with optional additional credits. Allowances and pricing will be shown in the app before you use the feature; they are not a subscription unless the app says so in plain words.</p>
+<ul>
+<li><strong>Permissions.</strong> Connected features may request device permissions (such</li>
+</ul>
+<p>as Health Connect access or the microphone) at the moment you first use them. You can revoke permissions any time in your device settings; the related feature will simply stop working.</p>
+    
+    <h3>Privacy</h3>
+    <p>This app has no accounts and collects no data. Everything you enter is stored only on your device, in your browser/app storage, and is never uploaded, transmitted, or shared. We never see your data. Files you export (backups, quotes, PDFs) are under your control &mdash; store and send them only where you choose. If you clear your browser data, lose your device, or uninstall the app, your records may be permanently lost, so export backups regularly.</p>
+    <p class="ww-seller">Sold by White Wolf Tree Service LLC (White Wolf Digital) &mdash; whitewolfoklahoma@gmail.com</p>
+  </div>
+</div>
+
+<script>
+/* ===== White Wolf Legal Pattern v1.0 ===== */
+(function(){
+"use strict";
+var TERMS_VERSION = "1.0";
+var WW_KEY = "turnbook_v1";
+var WW_HAS_DISC = false;
+var WWREC = null;
+function wwValid(r){ return r && typeof r === "object" && typeof r.termsVersion === "string" && !!r.termsVersion; }
+function wwVerCmp(a,b){ var pa=String(a).split("."), pb=String(b).split("."); for(var i=0;i<3;i++){ var x=parseInt(pa[i]||"0",10)||0, y=parseInt(pb[i]||"0",10)||0; if(x<y) return -1; if(x>y) return 1; } return 0; }
+function wwReadStored(){ try{ var raw = localStorage.getItem(WW_KEY); if(!raw) return null; var o = JSON.parse(raw); return (o && typeof o === "object") ? o : null; }catch(e){ return null; } }
+var _wwStored = wwReadStored();
+if(_wwStored && wwValid(_wwStored.legal)) WWREC = _wwStored.legal;
+try{
+  var _wwOrigSet = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(k,v){
+    if(k === WW_KEY && typeof v === "string"){
+      try{ var o = JSON.parse(v); if(o && typeof o === "object" && !Array.isArray(o)){
+        if(wwValid(o.legal)){ WWREC = o.legal; }
+        else if(WWREC){ o.legal = WWREC; v = JSON.stringify(o); }
+      } }catch(e){}
+    }
+    return _wwOrigSet(k,v);
+  };
+}catch(e){}
+function wwSyncState(){ try{ if(typeof state !== "undefined" && state && typeof state === "object" && WWREC) state.legal = WWREC; }catch(e){} }
+function wwPersist(){
+  wwSyncState();
+  try{ save() }catch(e){}
+  try{ var o = wwReadStored(); if(o){ o.legal = WWREC; localStorage.setItem(WW_KEY, JSON.stringify(o)); } }catch(e){}
+}
+function wwAcceptLine(){
+  var el = document.getElementById("wwAcceptLine"); if(!el) return;
+  if(WWREC && WWREC.acceptedDate){ el.textContent = "You agreed to Terms v" + WWREC.termsVersion + " on " + WWREC.acceptedDate + "."; }
+  else { el.textContent = "You have not recorded acceptance of the Terms yet."; }
+}
+function wwOpenLegal(){ var p = document.getElementById("wwLegalPanel"); if(p){ p.hidden = false; p.scrollTop = 0; } wwAcceptLine(); }
+function wwCloseLegal(){ var p = document.getElementById("wwLegalPanel"); if(p) p.hidden = true; }
+function wwInit(){
+  var overlay = document.getElementById("wwLegalOverlay");
+  var agree = document.getElementById("wwAgree");
+  var rt = document.getElementById("wwReadTerms");
+  var rd = document.getElementById("wwReadDisc");
+  var close = document.getElementById("wwLegalClose");
+  if(rt) rt.addEventListener("click", wwOpenLegal);
+  if(rd) rd.addEventListener("click", wwOpenLegal);
+  if(close) close.addEventListener("click", wwCloseLegal);
+  var agreeCheck = document.getElementById("wwAgreeCheck");
+  if(agree) agree.disabled = !(agreeCheck && agreeCheck.checked);
+  if(agreeCheck && agree) agreeCheck.addEventListener("change", function(){ agree.disabled = !agreeCheck.checked; });
+  if(agree) agree.addEventListener("click", function(){
+    if(agree.disabled || !(agreeCheck && agreeCheck.checked)) return;
+    WWREC = { termsVersion: TERMS_VERSION, acceptedDate: new Date().toISOString().slice(0,10), disclaimerShown: WW_HAS_DISC };
+    wwPersist(); wwAcceptLine();
+    if(overlay) overlay.hidden = true;
+  });
+  wwSyncState(); wwAcceptLine();
+  if(!WWREC || wwVerCmp(WWREC.termsVersion, TERMS_VERSION) < 0){
+    if(WWREC){ var note = document.getElementById("wwUpdatedNote"); if(note) note.hidden = false; }
+    if(overlay) overlay.hidden = false;
+  }
+  var anchors = [{sel:"#view-settings",marker:null}];
+  function wwEnsureBtn(){
+    for(var i=0;i<anchors.length;i++){
+      var a = anchors[i]; var el = document.querySelector(a.sel); if(!el) continue;
+      if(el.querySelector("[data-ww-legal-btn]")) continue;
+      var txt = el.textContent || "";
+      if(a.marker){ if(txt.toLowerCase().indexOf(a.marker.toLowerCase()) < 0) continue; }
+      else if(txt.replace(/\s+/g,"").length < 40) continue;
+      var card = document.createElement("div");
+      card.setAttribute("data-ww-legal-card","");
+      card.innerHTML = "<h3 style=\"margin:0 0 6px\">Legal</h3><p style=\"margin:0 0 10px\">Terms of Use, disclaimer and privacy for this app.</p>";
+      var b = document.createElement("button");
+      b.type = "button"; b.setAttribute("data-ww-legal-btn",""); b.textContent = "View Legal \u2014 Terms, Disclaimer & Privacy";
+      b.addEventListener("click", wwOpenLegal);
+      card.appendChild(b); el.appendChild(card);
+    }
+  }
+  wwEnsureBtn();
+  setInterval(wwEnsureBtn, 700);
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", wwInit); else wwInit();
+})();
+</script>
+</body>
+</html>
