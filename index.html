@@ -323,6 +323,9 @@ details.help summary{cursor:pointer;font-weight:700;color:var(--acc)}
 <script>
 "use strict";
 var LS_KEY = "turnbook_v1";
+var BACKUP_KEY = LS_KEY + "_backup";
+var CORRUPT_KEY = LS_KEY + "_corrupt";
+var RECOVERY_NOTICE = "";
 var DEFAULT_CHECKLIST = ["Strip beds and start laundry","Wash dishes and run/empty dishwasher","Wipe kitchen counters, stove and fridge handles","Clean and sanitize both bathrooms","Restock toilet paper, paper towels and soaps","Vacuum all floors, mop hard floors","Empty every trash can and replace liners","Set thermostat, close windows, lock up and set alarm"];
 
 function uid(){ return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -387,14 +390,46 @@ function seed(){
   return s;
 }
 
-function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){} }
+function save(){ try{ var __raw = JSON.stringify(state); localStorage.setItem(LS_KEY, __raw); localStorage.setItem(BACKUP_KEY, __raw); }catch(e){} }
+function validStored(p){ return !!(p && typeof p === "object" && !Array.isArray(p) && (!!(p.settings && typeof p.settings === "object" && Array.isArray(p.jobs)))); }
 function load(){
-  try {
-    var raw = localStorage.getItem(LS_KEY);
-    if (raw) { var parsed = JSON.parse(raw); if (parsed && parsed.settings) { state = parsed; return; } }
-  } catch(e){}
-  state = seed(); save();
+  var raw = null;
+  try{ raw = localStorage.getItem(LS_KEY); }catch(e){}
+  if (!raw){ state = seed(); save(); return; }
+  var parsed = null;
+  try{ parsed = JSON.parse(raw); }catch(e){ parsed = null; }
+  var cand = null;
+  if (validStored(parsed)){ try{ cand = parsed; }catch(e){ cand = null; } }
+  if (cand){ state = cand; try{ localStorage.setItem(BACKUP_KEY, raw); }catch(e){} return; }
+  /* Damaged data: preserve the raw copy under its own key, restore the last
+     good backup if there is one, and say so out loud — never silently
+     wipe-and-reseed over the user's book. */
+  try{ localStorage.setItem(CORRUPT_KEY, raw); }catch(e){}
+  var braw = null;
+  try{ braw = localStorage.getItem(BACKUP_KEY); }catch(e){}
+  if (braw){
+    var bp = null;
+    try{ bp = JSON.parse(braw); }catch(e){ bp = null; }
+    var bcand = null;
+    if (validStored(bp)){ try{ bcand = bp; }catch(e){ bcand = null; } }
+    if (bcand){ state = bcand; RECOVERY_NOTICE = "Your saved TurnBook data couldn't be read, so your last good backup was restored. The damaged copy was preserved under the storage key \"" + CORRUPT_KEY + "\" — nothing was deleted."; save(); return; }
+  }
+  state = seed();
+  RECOVERY_NOTICE = "Your saved TurnBook data couldn't be read and no good backup was found, so the sample data was loaded so you can keep working. The damaged copy was preserved under the storage key \"" + CORRUPT_KEY + "\" — nothing was deleted.";
+  save();
 }
+function showRecoveryBanner(){
+  if (!RECOVERY_NOTICE || document.getElementById("recoveryBanner")) return;
+  var d = document.createElement("div");
+  d.id = "recoveryBanner"; d.setAttribute("role", "alert");
+  d.style.cssText = "background:#fff3cd;border-bottom:3px solid #e8a13a;color:#5b4300;padding:12px 16px;font:600 15px/1.45 system-ui,sans-serif;text-align:center;position:relative;z-index:9999";
+  var span = document.createElement("span"); span.textContent = RECOVERY_NOTICE + " ";
+  var b = document.createElement("button"); b.textContent = "OK — got it"; b.style.cssText = "margin-left:8px;padding:6px 14px;font-weight:700;cursor:pointer";
+  b.onclick = function(){ d.remove(); };
+  d.appendChild(span); d.appendChild(b);
+  document.body.insertBefore(d, document.body.firstChild);
+}
+(function(){ var tries = 0; function attempt(){ if (RECOVERY_NOTICE){ showRecoveryBanner(); return; } if (++tries <= 20) setTimeout(attempt, 150); } if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", attempt); attempt(); })();
 
 function hostById(id){ for (var i=0;i<state.hosts.length;i++) if (state.hosts[i].id===id) return state.hosts[i]; return null; }
 function propById(id){ for (var i=0;i<state.properties.length;i++) if (state.properties[i].id===id) return state.properties[i]; return null; }
@@ -980,7 +1015,7 @@ document.addEventListener("DOMContentLoaded", init);
   <div class="ww-card" role="dialog" aria-modal="true" aria-labelledby="wwLegalTitle">
     <div class="ww-appname">TurnBook</div>
     <h2 id="wwLegalTitle">Terms of Use</h2>
-    <p class="ww-updated" id="wwUpdatedNote" hidden>Our terms were updated (v1.0).</p>
+    <p class="ww-updated" id="wwUpdatedNote" hidden>Our terms were updated (v1.0.1).</p>
     <p class="ww-sum">Your data stays on your device.<br>Estimates are aids, not guarantees.<br>You&#39;re responsible for checking outputs before you rely on them.</p>
     <p class="ww-follow">The full Terms and Disclaimer are one tap away, now and any time in Settings &#8594; Legal.</p>
     <button type="button" class="ww-btn" id="wwReadTerms">Read the full Terms</button>
@@ -995,10 +1030,10 @@ document.addEventListener("DOMContentLoaded", init);
     <h2>Legal</h2>
     <p class="ww-accept" id="wwAcceptLine">You have not recorded acceptance of the Terms yet.</p>
     <h3>Terms of Use</h3>
-    <p><strong>Version 1.0 (DRAFT — pending attorney review)</strong> <strong>Seller: White Wolf Tree Service LLC, selling digital products under the name "White Wolf Digital"</strong> <strong>Contact: whitewolfoklahoma@gmail.com</strong></p>
+    <p><strong>Version 1.0.1 (DRAFT — pending attorney review)</strong> <strong>Seller: White Wolf Apps</strong> <strong>Contact: whitewolfbackoffice@gmail.com</strong></p>
 <hr>
 <h4>1. What you're buying</h4>
-<p>Our apps (including ForgeFit AI, ForgeKitchen, TreeBid Pro, SnowBid, WashPrice Pro, RoofSquares, JobProfit Tracker, PastureLedger, and the other titles sold under White Wolf Digital) are single-file software tools. When you buy one, you are buying a <strong>license to use the file</strong>, not ownership of the software itself.</p>
+<p>Our apps (including LogEasy, ForgeKitchen, BranchMath, SnowBid, GrimeMath, RoofSquares, ProfitFlag, PastureLedger, and the other titles sold under White Wolf Apps) are single-file software tools. When you buy one, you are buying a <strong>license to use the file</strong>, not ownership of the software itself.</p>
 <h4>2. Your license</h4>
 <ul>
 <li>You may use the app for your own personal or business work.</li>
@@ -1050,7 +1085,7 @@ document.addEventListener("DOMContentLoaded", init);
 <li>Nothing in these terms limits liability that cannot legally be limited.</li>
 </ul>
 <h4>8. Refunds</h4>
-<p>Refunds are handled <strong>by the storefront you bought from, under that storefront's policy</strong> — Gumroad's refund policy for Gumroad purchases, and Google Play's refund policy for Play purchases. These terms do not add to, replace, or override the storefront's refund rules. If a file is defective and won't open, contact us at whitewolfoklahoma@gmail.com and we'll fix or replace the file.</p>
+<p>Refunds are handled <strong>by the storefront you bought from, under that storefront's policy</strong> — Gumroad's refund policy for Gumroad purchases, and Google Play's refund policy for Play purchases. These terms do not add to, replace, or override the storefront's refund rules. If a file is defective and won't open, contact us at whitewolfbackoffice@gmail.com and we'll fix or replace the file.</p>
 <h4>9. Updates and changes to these terms</h4>
 <ul>
 <li>We may release updated versions of an app. Updates may add, change, or</li>
@@ -1066,10 +1101,10 @@ document.addEventListener("DOMContentLoaded", init);
 <h4>10. Governing law</h4>
 <p>These terms are governed by the laws of the <strong>State of Oklahoma</strong>, USA. (Attorney to confirm governing law and venue before publication.)</p>
 <h4>11. Contact</h4>
-<p>White Wolf Tree Service LLC (White Wolf Digital) — whitewolfoklahoma@gmail.com.</p>
+<p>White Wolf Apps — whitewolfbackoffice@gmail.com.</p>
 <hr>
 <h4>CONNECTED FEATURES — takes effect only when these features ship</h4>
-<p><em>The sections below apply only to future connected features (device sync via Health Connect, AI voice logging, and the AI Goal Preview in ForgeFit). They do not apply to the current offline versions, which never transmit data.</em></p>
+<p><em>The sections below apply only to future connected features (device sync via Health Connect, AI voice logging, and the AI Goal Preview in LogEasy). They do not apply to the current offline versions, which never transmit data.</em></p>
 <ul>
 <li><strong>Opt-in only.</strong> Connected features are off by default. Each one asks for</li>
 </ul>
@@ -1097,7 +1132,8 @@ document.addEventListener("DOMContentLoaded", init);
     
     <h3>Privacy</h3>
     <p>This app has no accounts and collects no data. Everything you enter is stored only on your device, in your browser/app storage, and is never uploaded, transmitted, or shared. We never see your data. Files you export (backups, quotes, PDFs) are under your control &mdash; store and send them only where you choose. If you clear your browser data, lose your device, or uninstall the app, your records may be permanently lost, so export backups regularly.</p>
-    <p class="ww-seller">Sold by White Wolf Tree Service LLC (White Wolf Digital) &mdash; whitewolfoklahoma@gmail.com</p>
+    <p><a href="mailto:whitewolfbackoffice@gmail.com?subject=TurnBook%20help%20%E2%80%94%20v1.0.2&body=Tell%20us%20what%20you%20were%20trying%20to%20do%20and%20what%20happened%3A%0A%0A">✉️ Email us for help</a></p>
+    <p class="ww-seller">Sold by White Wolf Apps &mdash; whitewolfbackoffice@gmail.com</p>
   </div>
 </div>
 
@@ -1105,7 +1141,7 @@ document.addEventListener("DOMContentLoaded", init);
 /* ===== White Wolf Legal Pattern v1.0 ===== */
 (function(){
 "use strict";
-var TERMS_VERSION = "1.0";
+var TERMS_VERSION = "1.0.1";
 var WW_KEY = "turnbook_v1";
 var WW_HAS_DISC = false;
 var WWREC = null;
